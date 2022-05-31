@@ -232,7 +232,7 @@
 			<SampledCounters>
 				<!-- Accordig to https://stackoverflow.com/questions/53840322/difference-between-llcmisses-and-cachemisses-on-hardware-counters the counters are first
 			     defined in a generic way, which have then Processor Architecture specific latter synonyms.
-				 CPI rate (presumably Clockticks Per Instruction) not just the ratio of UnhaltedCoreCycles to InstructionRetired?
+				 CPI = UnhaltedCoreCycles/InstructionRetired The reverse Instructions Per Cycle IPC is also used.
 				 CPI Rate
 					Metric Description
 						Cycles per Instruction Retired, or CPI, is a fundamental performance metric indicating approximately how much time each executed instruction took, in units of cycles. Modern superscalar processors issue up to four instructions per cycle, suggesting a theoretical best CPI of 0.25. But various effects (long-latency memory, floating-point, or SIMD operations; non-retired instructions due to branch mispredictions; instruction starvation in the front-end) tend to pull the observed CPI up. A CPI of 1 is generally considered acceptable for HPC applications but different application domains will have very different expected values. Nonetheless, CPI is an excellent metric for judging an overall potential for application performance tuning.
@@ -242,13 +242,13 @@
 			 wpr -pmcsources
 				Id  Name													Interval  Min      Max
 				  0 Timer													10000    1221    1000000
-				  2 TotalIssues == InstructionRetired						65536  4096 2147483647
-				  6 BranchInstructions   == BranchInstructionRetired		65536  4096 2147483647
-				 10 CacheMisses == LLCMisses								65536  4096 2147483647
-				 11 BranchMispredictions == BranchMispredictsRetired		65536  4096 2147483647
-				 19 TotalCycles == UnhaltedCoreCycles						65536  4096 2147483647
+				  2 TotalIssues				== InstructionRetired			65536  4096 2147483647
+				  6 BranchInstructions		== BranchInstructionRetired		65536  4096 2147483647
+				 10 CacheMisses				== LLCMisses					65536  4096 2147483647
+				 11 BranchMispredictions	== BranchMispredictsRetired		65536  4096 2147483647
+				 19 TotalCycles				== UnhaltedCoreCycles			65536  4096 2147483647
 				*25 UnhaltedCoreCycle										65536  4096 2147483647
-				 26 InstructionRetired										65536  4096 2147483647
+				*26 InstructionRetired										65536  4096 2147483647
 				 27 UnhaltedReferenceCycles									65536  4096 2147483647
 				 28 LLCReference											65536  4096 2147483647
 			    *29 LLCMisses												65536  4096 2147483647
