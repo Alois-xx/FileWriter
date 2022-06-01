@@ -4,9 +4,11 @@ is a simple test application to show how one can integrate performance regressio
 
 Compile the application with VS 2022 and execute from an administrator prompt *RunPerformanceTests.cmd*.
 
-The used *MultiProfile.wprp* ETW profile is an example of pretty much all ETW features present. If you want to author
-your own recording profile it can serve as base for your own expeditions into uncharted territories of Windows.
+For automated ETW data analysis you need to download ETWAnalyzer from https://github.com/Siemens-Healthineers/ETWAnalyzer/releases
+and put the ETWAnalyzer.exe into your path.
 
+The used *MultiProfile.wprp* ETW profile is an example of most ETW features. If you want to author
+your own recording profile it can serve as base for your own expeditions into uncharted territories of Windows.
 
 FileWriter writes 5000 files into a folder where each file is 100 KB in size. 
 It has 3 strategies implemented:
@@ -24,6 +26,7 @@ What can we do to make things faster?
 ***Sample Output***
 ```
 D:\Source\FileWriter\bin\Release\net6.0>RunPerformanceTests.cmd
+
 Testcase CreateSerial
 Wait 10s for system to settle down
 Calling: FileWriter.exe -generate "C:\temp\Test1" serial
@@ -34,6 +37,7 @@ Stop Profiling
 Press Ctrl+C to cancel the stop operation.
 100%  [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
 The trace was successfully saved.
+
 Testcase CreateParallel
 Wait 10s for system to settle down
 Calling: FileWriter.exe -generate "C:\temp\Test1" parallel
@@ -44,6 +48,7 @@ Stop Profiling
 Press Ctrl+C to cancel the stop operation.
 100%  [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
 The trace was successfully saved.
+
 Testcase CreateTaskParallel
 Wait 10s for system to settle down
 Calling: FileWriter.exe -generate "C:\temp\Test1" taskparallel
@@ -54,6 +59,7 @@ Stop Profiling
 Press Ctrl+C to cancel the stop operation.
 100%  [>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>]
 The trace was successfully saved.
+
 15 - files found to extract.
 Skipping file c:\temp\CreateSerial_12443msSKYRMION.etl 1/15 because extract already exists
 Skipping file c:\temp\CreateTaskParallel_12166msSKYRMION.etl 2/15 because extract already exists
