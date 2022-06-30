@@ -48,7 +48,7 @@
 					cd c:\temp
 					wpr -merge "WPR_initiated_WprApp_WPR User Event Collector.etl" "WPR_initiated_WprApp_WPR Rundown Event Collector.etl" "WPR_initiated_WprApp_WPR System Collector.etl" Inject.etl Shutdown_%ComputerName%.etl -compress
 		-->
-		
+
 		<!-- Collector for system session. The definition of memory buffer sizes are overriden later by the profile -->
 		<SystemCollector Base="" Id="SystemProfiling_System" Realtime="false" HostGuestCorrelation="false" />
 		<!-- Collector for user mode events -->
@@ -226,14 +226,14 @@
 				<Keyword Value="CSwitch"/>   <!-- also need the same flag in HardwareCounter <Event> -->
 			</Keywords>
 		</SystemProvider>
-		
+
 		<!-- Sampling Counter - Enables PMC Rollover Graph -->
 		<HardwareCounter Id="HardwareCounters_SamplingCounters" Base="" Strict="true">
 			<SampledCounters>
 				<!-- Accordig to https://stackoverflow.com/questions/53840322/difference-between-llcmisses-and-cachemisses-on-hardware-counters the counters are first
 			     defined in a generic way, which have then Processor Architecture specific latter synonyms.
-				 CPI = UnhaltedCoreCycles/InstructionRetired The reverse Instructions Per Cycle IPC is also used.
-				 CPI Rate
+				 CPI = UnhaltedCoreCycles/InstructionRetired
+				 CPI From Intel Docs:
 					Metric Description
 						Cycles per Instruction Retired, or CPI, is a fundamental performance metric indicating approximately how much time each executed instruction took, in units of cycles. Modern superscalar processors issue up to four instructions per cycle, suggesting a theoretical best CPI of 0.25. But various effects (long-latency memory, floating-point, or SIMD operations; non-retired instructions due to branch mispredictions; instruction starvation in the front-end) tend to pull the observed CPI up. A CPI of 1 is generally considered acceptable for HPC applications but different application domains will have very different expected values. Nonetheless, CPI is an excellent metric for judging an overall potential for application performance tuning.
 					Possible Issues
@@ -242,13 +242,13 @@
 			 wpr -pmcsources
 				Id  Name													Interval  Min      Max
 				  0 Timer													10000    1221    1000000
-				  2 TotalIssues				== InstructionRetired			65536  4096 2147483647
-				  6 BranchInstructions		== BranchInstructionRetired		65536  4096 2147483647
-				 10 CacheMisses				== LLCMisses					65536  4096 2147483647
-				 11 BranchMispredictions	== BranchMispredictsRetired		65536  4096 2147483647
-				 19 TotalCycles				== UnhaltedCoreCycles			65536  4096 2147483647
-				*25 UnhaltedCoreCycle										65536  4096 2147483647
-				*26 InstructionRetired										65536  4096 2147483647
+				  2 TotalIssues == InstructionRetired						65536  4096 2147483647
+				  6 BranchInstructions   == BranchInstructionRetired		65536  4096 2147483647
+				 10 CacheMisses == LLCMisses								65536  4096 2147483647
+				 11 BranchMispredictions == BranchMispredictsRetired		65536  4096 2147483647
+				 19 TotalCycles == UnhaltedCoreCycles						65536  4096 2147483647
+				*25 UnhaltedCoreCycles										65536  4096 2147483647
+				 26 InstructionRetired										65536  4096 2147483647
 				 27 UnhaltedReferenceCycles									65536  4096 2147483647
 				 28 LLCReference											65536  4096 2147483647
 			    *29 LLCMisses												65536  4096 2147483647
@@ -271,20 +271,42 @@
 
 			</SampledCounters>
 		</HardwareCounter>
-		
-		<!-- Counting enabled CPI (Cycles per Instruction Graph) -->
-		<HardwareCounter Id="HardwareCounters_EventCounters" Base="" Strict="true">
+
+		<!-- Counting enabled CPI (Cycles per Instruction Graph) and Branch metrics -->
+		<HardwareCounter Id="HardwareCounters_EventCounters_CPI_Branch" Base="" Strict="true">
 			<Counters>
+				<!-- Only up to 4 counters are supported at a time. If you use 4 then you cannot use CPU sampling because that uses Timer! -->
 				<Counter Value="TotalCycles"/>
-				<!-- beware these counters are not used by another session. Only one session can use the counters -->
 				<Counter Value="InstructionRetired" />
+				<Counter Value="BranchMispredictions" />
+				<!-- 
+				<Counter Value="BranchInstructions" />
+				-->
+
 			</Counters>
 			<Events>
 				<Event Value="CSwitch"/>
 				<!-- counter is called right after these events, should also be in SystemProvider -->
 			</Events>
 		</HardwareCounter>
-		
+
+		<!-- Counting enabled CPI (Cycles per Instruction Graph) and Last Level Cache (LLC) metrics -->
+		<HardwareCounter Id="HardwareCounters_EventCounters_CPI_LLC" Base="" Strict="true">
+			<Counters>
+				<!-- Only up to 4 counters are supported at a time. If you use 4 then you cannot use CPU sampling because that uses Timer!-->
+				<Counter Value="TotalCycles"/>
+				<Counter Value="InstructionRetired" />
+				<Counter Value="LLCMisses" />
+				<!-- 
+				<Counter Value="LLCReference" />
+				-->
+			</Counters>
+			<Events>
+				<Event Value="CSwitch"/>
+				<!-- counter is called right after these events, should also be in SystemProvider -->
+			</Events>
+		</HardwareCounter>
+
 		<!-- 
 	<EventProvider CaptureStateOnly="true" Id="EventProvider_DotNETRuntime_CaptureState" Level="5" Name="E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4">
 	  <CaptureStateOnSave>
@@ -349,7 +371,7 @@
 			</StackFilters>
 		</EventProvider>
 
-    <EventProvider Id="EventProvider_TCPProvider"  Name="Microsoft-Windows-TCPIP" NonPagedMemory="true" Stack="false">
+		<EventProvider Id="EventProvider_TCPProvider"  Name="Microsoft-Windows-TCPIP" NonPagedMemory="true" Stack="false">
 			<EventFilters FilterIn="false">
 				<EventId Value="1065"/>  <!-- TcpTcbStartTimer -->
 				<EventId Value="1157"/>  <!-- TcpDeliveryIndicated -->
@@ -366,8 +388,8 @@
 			<StackFilters FilterIn="true">
 				<EventId Value="1013"/> <!-- TcpCreateEndpoint Useful to find out who initiates a TCP connection from an unusual code location -->
 			</StackFilters>
-    </EventProvider>
-			<!-- Microsoft-Windows-DNS-Client provider flags
+		</EventProvider>
+		<!-- Microsoft-Windows-DNS-Client provider flags
 			0x0000000000000100  ut:GenericEvent			0x0000000010000000  ut:DnsAutoLogKeyword	0x0000000020000000  ut:PolicyTable		0x0000000040000000  ut:PerfCheckPoints
 			0x0000000080000000  ut:RegistrationEvent	0x0000000100000000  ut:SendPath				0x0000000200000000  ut:ReceivePath		0x0000000400000000  ut:L3ConnectPath
 			0x0000000800000000  ut:L2ConnectPath		0x0000001000000000  ut:ClosePath			0x0000002000000000  ut:Authentication	0x0000004000000000  ut:Configuration
@@ -385,7 +407,7 @@
 		</EventProvider>
 		<EventProvider Id="EventProvider_UserGDILeaks"  Name="Microsoft-Windows-Win32k" NonPagedMemory="true" Stack="true">
 			<Keywords>
-			<!--  Microsoft-Windows-Win32k
+				<!--  Microsoft-Windows-Win32k
 			0x0000000000000400  AuditApiCalls		0x0000000000000800  CompatImpact		0x0000000000001000  Updates			0x0000000000002000  Focus
 			0x0000000000004000  UIPI				0x0000000000008000  win32Power			0x0000000000010000  Concurrency		0x0000000000020000  UserActivity
 			0x0000000000040000  UIUnresponsiveness	0x0000000000080000  ThreadRundown		0x0000000000100000  Rendering		0x0000000000200000  ThreadInfo
@@ -401,7 +423,7 @@
 			0x0400000000000000  Microsoft-Windows-Win32k/Messages							0x0200000000000000  Microsoft-Windows-Win32k/Contention
 			0x0100000000000000  Microsoft-Windows-Win32k/Operational
 			-->
-			<!-- Works since Windows 10 1903 -->
+				<!-- Works since Windows 10 1903 -->
 				<!-- 0x0000010000000000 GdiHandleOperation -->
 				<!-- 0x0000020000000000 UserHandleOperation  -->
 				<Keyword Value = "0x30000000000" />  <!-- Track GDI and Window Handle Leaks -->
@@ -412,11 +434,11 @@
 			<!-- 
 			Microsoft-Windows-Winsock-AFD            {E53C6823-7BB8-44BB-90DC-3F86090D48A6}
 			Value               Keyword              Description
-			0x0000000000000001  AFD_KW_DATAGRAM      Datagram socket			0x0000000000000002  AFD_KW_STREAM        Stream socket
+			0x0000000000000001  AFD_KW_DATAGRAM      Datagram socket		0x0000000000000002  AFD_KW_STREAM        Stream socket
 			0x0000000000000004  AFD_KW_SOURCE_WINSOCK Winsock initiated event	0x0000000000000008  AFD_KW_SOURCE_TRANSPORT Transport initiated event
-			0x0000000000000010  AFD_KW_FASTPATH      Fastpath I/O				0x0000000000000020  AFD_KW_BUFFERED      Buffered
-			0x0000000000000040  AFD_KW_RIO           RIO						0x0000000000000080  AFD_KW_NRT           NRT
-			0x0000010000000000  ut:Dropped										0x8000000000000000  Microsoft-Windows-Winsock-AFD/Operational Microsoft-Windows-Winsock Network Event/Operational
+			0x0000000000000010  AFD_KW_FASTPATH      Fastpath I/O			0x0000000000000020  AFD_KW_BUFFERED      Buffered
+			0x0000000000000040  AFD_KW_RIO           RIO				0x0000000000000080  AFD_KW_NRT           NRT
+			0x0000010000000000  ut:Dropped						0x8000000000000000  Microsoft-Windows-Winsock-AFD/Operational Microsoft-Windows-Winsock Network Event/Operational
 			Value               Level                Description
 			0x02                win:Error            Error
 			0x03                win:Warning          Warning
@@ -642,7 +664,7 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				<EventCollectorId Value="EventCollector_Rundown">
 					<!-- Operation Set will overwrite the value from inherited profile. Add will add the numbers, Remove will subtract!  -->
 					<Buffers Operation="Set" Value="1000" />
-					
+
 				</EventCollectorId>
 
 			</Collectors>
@@ -774,7 +796,7 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
-		<Profile Id="PMCSample.Verbose.File" Name="PMCSample" Description="Default + PMC Sampling for PMC Rollover" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
+		<Profile Id="PMCSample.Verbose.File" Name="PMCSample" Description="PMC Sampling for PMC Rollover + Default" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
 			<Collectors Operation="Remove">
 				<SystemCollectorId Value="SystemProfiling_System"/>
 			</Collectors>
@@ -785,7 +807,7 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
-		<Profile Id="PMCSample.Verbose.Memory" Name="PMCSample" Description="Default + PMC Sampling for PMC Rollover" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+		<Profile Id="PMCSample.Verbose.Memory" Name="PMCSample" Description="PMC Sampling for PMC Rollover + Default" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
 			<Collectors Operation="Remove">
 				<SystemCollectorId Value="SystemProfiling_System"/>
 			</Collectors>
@@ -798,18 +820,18 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
-		<Profile Id="CPI.Verbose.File" Name="CPI" Description="CSwitch + PMC Counting Mode for Cycles per Instruction" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
+		<Profile Id="PMCBranch.Verbose.File" Name="PMCBranch" Description="PMC Cycles per Instruction and Branch data - Counting" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
 			<Collectors Operation="Remove">
 				<SystemCollectorId Value="SystemProfiling_System"/>
 			</Collectors>
 			<Collectors Operation="Add">
 				<SystemCollectorId Value="SystemProfiling_System">
 					<SystemProviderId Value="PMC_Count_SystemProvider"/>
-					<HardwareCounterId Value="HardwareCounters_EventCounters" />
+					<HardwareCounterId Value="HardwareCounters_EventCounters_CPI_Branch" />
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
-		<Profile Id="CPI.Verbose.Memory" Name="CPI" Description="CSwitch + PMC Counting Mode for Cycles per Instruction" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+		<Profile Id="PMCBranch.Verbose.Memory" Name="PMCBranch" Description="PMC Cycles per Instruction and Branch data - Counting" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
 			<Collectors Operation="Remove">
 				<SystemCollectorId Value="SystemProfiling_System"/>
 			</Collectors>
@@ -818,7 +840,31 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				<SystemCollectorId Value="SystemProfiling_System">
 					<Buffers PercentageOfTotalMemory="true" Value="15" MaximumBufferSpace="4000" />
 					<SystemProviderId Value="PMC_Count_SystemProvider"/>
-					<HardwareCounterId Value="HardwareCounters_EventCounters" />
+					<HardwareCounterId Value="HardwareCounters_EventCounters_CPI_Branch" />
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="PMCLLC.Verbose.File" Name="PMCLLC" Description="PMC Cycles per Instruction and LLC data - Counting" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors Operation="Remove">
+				<SystemCollectorId Value="SystemProfiling_System"/>
+			</Collectors>
+			<Collectors Operation="Add">
+				<SystemCollectorId Value="SystemProfiling_System">
+					<SystemProviderId Value="PMC_Count_SystemProvider"/>
+					<HardwareCounterId Value="HardwareCounters_EventCounters_CPI_LLC" />
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="PMCLLC.Verbose.Memory" Name="PMCLLC" Description="PMC Cycles per Instruction and LLC data - Counting" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+			<Collectors Operation="Remove">
+				<SystemCollectorId Value="SystemProfiling_System"/>
+			</Collectors>
+			<Collectors Operation="Add">
+				<!-- In the kernel session we define how much memory it needs and which SystemProviderId is enable which enables the corresponding kernel and stackwalks -->
+				<SystemCollectorId Value="SystemProfiling_System">
+					<Buffers PercentageOfTotalMemory="true" Value="15" MaximumBufferSpace="4000" />
+					<SystemProviderId Value="PMC_Count_SystemProvider"/>
+					<HardwareCounterId Value="HardwareCounters_EventCounters_CPI_LLC" />
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>

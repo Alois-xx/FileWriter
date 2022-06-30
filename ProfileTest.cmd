@@ -13,7 +13,7 @@ echo Testcase !TestCase!
 shift
 
 REM Start CPU profiling (which is includes in the Default Profile) and add File Acccess and Context Switch (Thread Wait times) data
-"!WPRLocation!" -start "!ScriptLocation!MultiProfile.wprp"^^!File -start "!ScriptLocation!MultiProfile.wprp"^^!CSwitch -start "!ScriptLocation!MultiProfile.wprp"^^!CPI
+"!WPRLocation!" -start "!ScriptLocation!MultiProfile.wprp"^^!File -start "!ScriptLocation!MultiProfile.wprp"^^!CSwitch -start "!ScriptLocation!MultiProfile.wprp"^^!PMCLLC
 
 REM When we measure performance we need to be able to differentiate a system state which did already exist before the performance test was executed
 REM an easy way is to wait 10s before and after the test to also capture potential asynchronous pending work which is still executing
