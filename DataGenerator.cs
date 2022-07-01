@@ -37,9 +37,15 @@
             }
         }
 
-        public void CreateFilesParallel(int n, int sizeKB)
+        public void CreateFilesParallel(int n, int sizeKB, int? nThreads)
         {
-            Parallel.For(0, n, i => CreateFile(i, sizeKB));
+            ParallelOptions options = new ParallelOptions();
+            if( nThreads != null)
+            {
+                options.MaxDegreeOfParallelism = nThreads.Value;
+            }
+
+            Parallel.For(0, n, options, i => CreateFile(i, sizeKB));
         }
 
         public void CreateFilesTask(int n, int sizekB)

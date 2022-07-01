@@ -14,7 +14,10 @@ namespace FileWriter
 
         static void Help()
         {
-            string Help = "FileWriter [-generate dir] [serial,parallel,taskparallel]" + Environment.NewLine;
+            string Help = "FileWriter [-generate dir] [serial,parallel [-threads n],taskparallel]  [-files dd]" + Environment.NewLine +
+                          "Examples" + Environment.NewLine +
+                          "Write files to c:\\temp with 4 threads" + Environment.NewLine +
+                          "  FileWriter -generate c:\\temp parallel -threads 4";
             Console.WriteLine(Help);
         }
 
@@ -23,50 +26,77 @@ namespace FileWriter
             int n = 5000;
             int sizeKB = 100;
 
-            if (args.Length > 1)
+            string? outputDirectory = null;
+            int? nThreads = null;
+            GenerationMode mode = GenerationMode.Serial;
+
+            Queue<string> qArgs = new Queue<string>(args);
+
+            try
             {
-                if (args[0].ToLowerInvariant() == "-generate")
+                while (qArgs.Count > 0)
                 {
-                    if (args.Length > 2)
-                    {
-                        DataGenerator gen = new DataGenerator(args[1]);
-                        GenerationMode mode = (GenerationMode)Enum.Parse(typeof(GenerationMode), args[2], true);
+                    string current = qArgs.Dequeue();
 
-                        var sw = Stopwatch.StartNew();
-                        switch (mode)
-                        {
-                            case GenerationMode.Parallel:
-                                gen.CreateFilesParallel(n, sizeKB);
-                                break;
-                            case GenerationMode.TaskParallel:
-                                gen.CreateFilesTask(n, sizeKB);
-                                break;
-                            case GenerationMode.Serial:
-                            default:
-                                gen.CreateFiles(n, sizeKB);
-                                break;
-                        }
-                        sw.Stop();
-                        Console.WriteLine($"Did create {n} files of {sizeKB} KB size ({(sizeKB * n) / 1024:N0}) MB in {sw.Elapsed.TotalSeconds:F3}s");
-                        return (int)sw.Elapsed.TotalMilliseconds;
-
-                    }
-                    else
+                    switch (current.ToLowerInvariant())
                     {
-                        Help();
+                        case "-generate":
+                            outputDirectory = qArgs.Dequeue();
+                            if (qArgs.Count > 0)
+                            {
+                                if (qArgs.TryPeek(out string? strMode))
+                                {
+                                    if (Enum.TryParse<GenerationMode>(strMode, true, out mode))
+                                    {
+                                        string tmp = qArgs.Dequeue();
+                                    }
+                                }
+                            }
+                            break;
+                        case "-threads":
+                            nThreads = int.Parse(qArgs.Dequeue());
+                            break;
+                        case "-files":
+                            n = int.Parse(qArgs.Dequeue());
+                            break;
+                        default:
+                            Help();
+                            Console.WriteLine($"Error: Argument {current} is not valid");
+                            return 0;
                     }
-                }
-                else
-                {
-                    Help();
                 }
             }
-            else
+            catch (InvalidOperationException)
             {
                 Help();
+                Console.WriteLine("Error: Required command argument missing.");
+                return 0;
             }
 
-            return 0;
+            if( outputDirectory == null)
+            {
+                Help();
+                return 0;
+            }
+
+            DataGenerator gen = new DataGenerator(outputDirectory);
+            var sw = Stopwatch.StartNew();
+            switch (mode)
+            {
+                case GenerationMode.Parallel:
+                    gen.CreateFilesParallel(n, sizeKB, nThreads);
+                    break;
+                case GenerationMode.TaskParallel:
+                    gen.CreateFilesTask(n, sizeKB);
+                    break;
+                case GenerationMode.Serial:
+                default:
+                    gen.CreateFiles(n, sizeKB);
+                    break;
+            }
+            sw.Stop();
+            Console.WriteLine($"Did create {n} files of {sizeKB} KB size ({(sizeKB * n) / 1024:N0}) MB in {sw.Elapsed.TotalSeconds:F3}s");
+            return (int)sw.Elapsed.TotalMilliseconds;
         }
     }
 
