@@ -378,7 +378,6 @@
 				<EventId Value="1205"/>  <!-- TcpipReceiveSlowPath -->
 				<EventId Value="1206"/>  <!-- TcpipSendSlowPath -->
 				<EventId Value="1064"/>  <!-- TcpTcbStartTimer -->
-				<EventId Value="1074"/>  <!-- TcpDataTransferReceive -->
 				<EventId Value="1090"/>  <!-- TcpReleaseIndication -->
 				<EventId Value="1319"/>  <!-- TcpipTimerDpcRescheduleEvent -->
 				<EventId Value="1320"/>  <!-- TcpipTimerDpcFiredEvent -->
