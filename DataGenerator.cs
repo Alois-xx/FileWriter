@@ -8,10 +8,11 @@
         /// <summary>
         /// Make Virus scanner nervous
         /// </summary>
-        const string FileExtension = ".cmd";
+        string myFileExtension = ".cmd";
 
-        public DataGenerator(string dir)
+        public DataGenerator(string dir, string extension)
         {
+            myFileExtension = extension;
             if( !Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
@@ -19,7 +20,7 @@
             else
             {
                 // delete old test data
-                foreach(var file in Directory.GetFiles(dir, "*" + FileExtension))
+                foreach(var file in Directory.GetFiles(dir, "*" + myFileExtension))
                 {
                     File.Delete(file);
                 }
@@ -64,7 +65,7 @@
         {
             int lineCount = 1;
             int writtenBytes = 0;
-            string fileName = Path.Combine(myDirectory, $"TestDataFile_{i}{FileExtension}");
+            string fileName = Path.Combine(myDirectory, $"TestDataFile_{i}{myFileExtension}");
             using(FileStream fs = new FileStream(fileName, FileMode.Create))
             {
                 using(StreamWriter sw = new StreamWriter(fs))

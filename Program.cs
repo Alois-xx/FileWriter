@@ -5,6 +5,8 @@ namespace FileWriter
 {
     public class Program
     {
+        static int myFileCount = 5000;
+
         enum GenerationMode
         {
             Serial,
@@ -14,22 +16,21 @@ namespace FileWriter
 
         static void Help()
         {
-            string Help = "FileWriter [-generate dir] [serial,parallel [-threads n],taskparallel]  [-files dd]" + Environment.NewLine +
+            string Help = "FileWriter [-generate dir] [serial,parallel [-threads n],taskparallel]  [-files dd] [-extension .cmd]" + Environment.NewLine +
                           "Examples" + Environment.NewLine +
-                          "Write files to c:\\temp with 4 threads" + Environment.NewLine +
+                          $"Write {myFileCount} files to c:\\temp with 4 threads." + Environment.NewLine +
                           "  FileWriter -generate c:\\temp parallel -threads 4";
             Console.WriteLine(Help);
         }
 
         public static int Main(string[] args)
         {
-            int n = 5000;
             int sizeKB = 100;
 
             string? outputDirectory = null;
             int? nThreads = null;
             GenerationMode mode = GenerationMode.Serial;
-
+            string extension = ".cmd"; // Make Antivirus nervous
             Queue<string> qArgs = new Queue<string>(args);
 
             try
@@ -56,8 +57,11 @@ namespace FileWriter
                         case "-threads":
                             nThreads = int.Parse(qArgs.Dequeue());
                             break;
+                        case "-extension":
+                            extension = qArgs.Dequeue();
+                            break;
                         case "-files":
-                            n = int.Parse(qArgs.Dequeue());
+                            myFileCount = int.Parse(qArgs.Dequeue());
                             break;
                         default:
                             Help();
@@ -79,23 +83,23 @@ namespace FileWriter
                 return 0;
             }
 
-            DataGenerator gen = new DataGenerator(outputDirectory);
+            DataGenerator gen = new DataGenerator(outputDirectory, extension);
             var sw = Stopwatch.StartNew();
             switch (mode)
             {
                 case GenerationMode.Parallel:
-                    gen.CreateFilesParallel(n, sizeKB, nThreads);
+                    gen.CreateFilesParallel(myFileCount, sizeKB, nThreads);
                     break;
                 case GenerationMode.TaskParallel:
-                    gen.CreateFilesTask(n, sizeKB);
+                    gen.CreateFilesTask(myFileCount, sizeKB);
                     break;
                 case GenerationMode.Serial:
                 default:
-                    gen.CreateFiles(n, sizeKB);
+                    gen.CreateFiles(myFileCount, sizeKB);
                     break;
             }
             sw.Stop();
-            Console.WriteLine($"Did create {n} files of {sizeKB} KB size ({(sizeKB * n) / 1024:N0}) MB in {sw.Elapsed.TotalSeconds:F3}s");
+            Console.WriteLine($"Did create {myFileCount} files of {sizeKB} KB size ({(sizeKB * myFileCount) / 1024:N0}) MB in {sw.Elapsed.TotalSeconds:F3}s");
             return (int)sw.Elapsed.TotalMilliseconds;
         }
     }
