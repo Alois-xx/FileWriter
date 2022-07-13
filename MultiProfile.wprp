@@ -307,6 +307,39 @@
 			</Events>
 		</HardwareCounter>
 
+		<!-- Last Branch Record samples Branch data from -> to jump targets which helps to determine e.g. often called methods -->
+		<HardwareCounter Id="HardwareCounters_EventCounters_LBR" Base="" Strict="false">
+			<LastBranch>
+				<Events>
+					<Event Value="SampledProfile" />
+					<Event Value="CSwitch" />
+				</Events>
+				<LastBranchFilters>
+					<!--  LastBranchFilterOut Values: ConditionalBranches NearRelativeCalls NearIndirectCalls NearReturns NearIndirectJumps FarBranches Kernel User StackMode -->
+					<LastBranchFilterOut Value="ConditionalBranches" />
+					<LastBranchFilterOut Value="NearRelativeCalls" />
+					<LastBranchFilterOut Value="NearIndirectCalls" />
+					<!--
+					<LastBranchFilterOut Value="NearReturns" />
+					-->
+					<LastBranchFilterOut Value="NearIndirectJumps" />
+					<LastBranchFilterOut Value="FarBranches" />
+					<LastBranchFilterOut Value="Kernel" />
+				</LastBranchFilters>
+			</LastBranch>
+			<!-- ProcessorTrace is different but I have not found a use for it yet and TraceProcessing does not support reading the data
+			<ProcessorTrace>
+				 BufferSize Values: 4, 8, 16, 32 
+				<BufferSize Value="16" />
+				CodeMode Values: User Kernel UserKernel
+				<CodeMode Value="User" />
+				<Events>
+				 E.g. CSwitch PmcInterrupt 
+					<Event Value="SampledProfile" />
+				</Events>
+			</ProcessorTrace>
+			-->
+		</HardwareCounter>
 		<!-- 
 	<EventProvider CaptureStateOnly="true" Id="EventProvider_DotNETRuntime_CaptureState" Level="5" Name="E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4">
 	  <CaptureStateOnSave>
@@ -854,6 +887,33 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
+
+		<Profile Id="LBR.Verbose.Memory" Name="LBR" Description="LBR - Last Branch Record Sampling" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+			<Collectors Operation="Remove">
+				<SystemCollectorId Value="SystemProfiling_System"/>
+			</Collectors>
+			<Collectors Operation="Add">
+				<!-- In the kernel session we define how much memory it needs and which SystemProviderId is enable which enables the corresponding kernel and stackwalks -->
+				<SystemCollectorId Value="SystemProfiling_System">
+					<Buffers PercentageOfTotalMemory="true" Value="15" MaximumBufferSpace="4000" />
+					<SystemProviderId Value="PMC_Count_SystemProvider"/>
+					<HardwareCounterId Value="HardwareCounters_EventCounters_LBR" />
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="LBR.Verbose.File" Name="LBR" Description="LBR - Last Branch Record Sampling" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors Operation="Remove">
+				<SystemCollectorId Value="SystemProfiling_System"/>
+			</Collectors>
+			<Collectors Operation="Add">
+				<SystemCollectorId Value="SystemProfiling_System">
+					<SystemProviderId Value="PMC_Count_SystemProvider"/>
+					<HardwareCounterId Value="HardwareCounters_EventCounters_LBR" />
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+
+
 		<Profile Id="PMCLLC.Verbose.Memory" Name="PMCLLC" Description="PMC Cycles per Instruction and LLC data - Counting" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
 			<Collectors Operation="Remove">
 				<SystemCollectorId Value="SystemProfiling_System"/>
