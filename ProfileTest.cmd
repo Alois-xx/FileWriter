@@ -2,6 +2,16 @@
 SETLOCAL EnableDelayedExpansion
 set OutDir=C:\temp
 
+if "%1" EQU "" (
+	echo ProfileTest.cmd TestcaseName YourApp.exe ...
+	echo   This will start profiling, wait a bit, and then run your executable with the arguments passed to your application.
+	echo   The contract is that the called executable returns the measured duration as milliseconds in its return value when it exits. 
+	echo Usage:
+	echo ProfileTest.cmd TestCase1 YourApp.exe -Run ....
+	echo   This will generate in C:\temp a file named TestCase1_ddddmsYourMachineName.etl where dddd is the return value of YourApp.exe.
+	goto :EOF
+)
+
 REM By default use the latest one from the Windows SDK
 set WPRLocation=C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\wpr.exe
 set ScriptLocation=%~dp0
