@@ -307,13 +307,50 @@
 			</Events>
 		</HardwareCounter>
 
-		<!-- 
+		<!-- Last Branch Record samples Branch data from -> to jump targets which helps to determine e.g. often called methods -->
+		<HardwareCounter Id="HardwareCounters_EventCounters_LBR" Base="" Strict="false">
+			<LastBranch>
+				<Events>
+					<Event Value="SampledProfile" />
+					<Event Value="CSwitch" />
+				</Events>
+				<LastBranchFilters>
+					<!--  LastBranchFilterOut Values: ConditionalBranches NearRelativeCalls NearIndirectCalls NearReturns NearIndirectJumps FarBranches Kernel User StackMode -->
+					<LastBranchFilterOut Value="ConditionalBranches" />
+					<LastBranchFilterOut Value="NearRelativeCalls" />
+					<LastBranchFilterOut Value="NearIndirectCalls" />
+					<!--
+					<LastBranchFilterOut Value="NearReturns" />
+					-->
+					<LastBranchFilterOut Value="NearIndirectJumps" />
+					<LastBranchFilterOut Value="FarBranches" />
+					<LastBranchFilterOut Value="Kernel" />
+				</LastBranchFilters>
+			</LastBranch>
+			<!-- ProcessorTrace is different but I have not found a use for it yet and TraceProcessing does not support reading the data
+			<ProcessorTrace>
+				 BufferSize Values: 4, 8, 16, 32 
+				<BufferSize Value="16" />
+				CodeMode Values: User Kernel UserKernel
+				<CodeMode Value="User" />
+				<Events>
+				 E.g. CSwitch PmcInterrupt 
+					<Event Value="SampledProfile" />
+				</Events>
+			</ProcessorTrace>
+			-->
+		</HardwareCounter> 
+<!-- 
 	<EventProvider CaptureStateOnly="true" Id="EventProvider_DotNETRuntime_CaptureState" Level="5" Name="E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4">
 	  <CaptureStateOnSave>
 		<Keyword Value="0x70138"/>
 	  </CaptureStateOnSave>
 	</EventProvider>
 -->
+		<EventProvider Id="EventProvider_Microsoft-Windows-Subsys-SMSS" Name="Microsoft-Windows-Subsys-SMSS" NonPagedMemory="true" />
+		<EventProvider Id="EventProvider_Microsoft-Windows-Winlogon" Name="Microsoft-Windows-Winlogon" NonPagedMemory="true" />
+		<EventProvider Id="EventProvider_Microsoft-Windows-Wininit" Name="Microsoft-Windows-Wininit" NonPagedMemory="true" />
+		
 		<EventProvider CaptureStateOnly="true" Id="MultiProfile_DotNETRuntimeRundown_CaptureState" Level="5" Name="a669021c-c450-4609-a035-5af59af4df18" Stack="false">
 			<!-- Default of .NET provider of wpr is 0x70138
 		c:\PerfTools\BitmaskDecoder.exe  0x70138 c:\Windows\Microsoft.NET\Framework64\v4.0.30319\CLR-ETW.man | findstr /i rundown
@@ -372,6 +409,9 @@
 		</EventProvider>
 
 		<EventProvider Id="EventProvider_TCPProvider"  Name="Microsoft-Windows-TCPIP" NonPagedMemory="true" Stack="false">
+			<CaptureStateOnSave> <!-- Get during rundown all open connections and some additional metrics which are stored by WPR. E.g. TcpConnectionRundown, IpRouteRundown, IpInterfaceRundown, TcpConnectionSummary, RssBindingRundow, RssPortRundown -->
+				<Keyword Value="0xffffffff"/>
+			</CaptureStateOnSave>
 			<EventFilters FilterIn="false">
 				<EventId Value="1065"/>  <!-- TcpTcbStartTimer -->
 				<EventId Value="1157"/>  <!-- TcpDeliveryIndicated -->
@@ -381,7 +421,7 @@
 				<EventId Value="1090"/>  <!-- TcpReleaseIndication -->
 				<EventId Value="1319"/>  <!-- TcpipTimerDpcRescheduleEvent -->
 				<EventId Value="1320"/>  <!-- TcpipTimerDpcFiredEvent -->
-        <EventId Value="1454"/>  <!-- Firewall Packet inspection result -->
+				<EventId Value="1454"/>  <!-- Firewall Packet inspection result -->
 				<EventId Value="1455"/>  <!-- Firewall Create Port -->
 			</EventFilters>
 			<StackFilters FilterIn="true">
@@ -590,6 +630,9 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 						<EventProviderId Value="MultiProfile_DotNetProvider"/>
 						<EventProviderId Value="EventProvider_FocusEvents"/>
 						<EventProviderId Value="EventProvider_Services" />
+						<EventProviderId Value="EventProvider_Microsoft-Windows-Subsys-SMSS"/>
+						<EventProviderId Value="EventProvider_Microsoft-Windows-Winlogon"/>
+						<EventProviderId Value="EventProvider_Microsoft-Windows-Wininit"/>
 					</EventProviders>
 				</EventCollectorId>
 				<!-- When many .NET processes with JITed code (e.g. Visual Studio) are running the .NET Rundown events can overwrite our actual payload data. We need an extra 
@@ -658,6 +701,9 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 						<EventProviderId Value="MultiProfile_DotNetProvider"/>
 						<EventProviderId Value="EventProvider_FocusEvents"/>
 						<EventProviderId Value="EventProvider_Services" />
+						<EventProviderId Value="EventProvider_Microsoft-Windows-Subsys-SMSS"/>
+						<EventProviderId Value="EventProvider_Microsoft-Windows-Winlogon"/>
+						<EventProviderId Value="EventProvider_Microsoft-Windows-Wininit"/>
 					</EventProviders>
 				</EventCollectorId>
 				<EventCollectorId Value="EventCollector_Rundown">
@@ -854,6 +900,33 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
+
+		<Profile Id="LBR.Verbose.Memory" Name="LBR" Description="LBR - Last Branch Record Sampling" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+			<Collectors Operation="Remove">
+				<SystemCollectorId Value="SystemProfiling_System"/>
+			</Collectors>
+			<Collectors Operation="Add">
+				<!-- In the kernel session we define how much memory it needs and which SystemProviderId is enable which enables the corresponding kernel and stackwalks -->
+				<SystemCollectorId Value="SystemProfiling_System">
+					<Buffers PercentageOfTotalMemory="true" Value="15" MaximumBufferSpace="4000" />
+					<SystemProviderId Value="PMC_Count_SystemProvider"/>
+					<HardwareCounterId Value="HardwareCounters_EventCounters_LBR" />
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="LBR.Verbose.File" Name="LBR" Description="LBR - Last Branch Record Sampling" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors Operation="Remove">
+				<SystemCollectorId Value="SystemProfiling_System"/>
+			</Collectors>
+			<Collectors Operation="Add">
+				<SystemCollectorId Value="SystemProfiling_System">
+					<SystemProviderId Value="PMC_Count_SystemProvider"/>
+					<HardwareCounterId Value="HardwareCounters_EventCounters_LBR" />
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+
+		
 		<Profile Id="PMCLLC.Verbose.Memory" Name="PMCLLC" Description="PMC Cycles per Instruction and LLC data - Counting" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
 			<Collectors Operation="Remove">
 				<SystemCollectorId Value="SystemProfiling_System"/>
