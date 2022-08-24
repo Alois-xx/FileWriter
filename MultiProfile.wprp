@@ -213,9 +213,6 @@
 				<Keyword Value="FileIOInit"/>
 				<Keyword Value="Filename"/>
 			</Keywords>
-			<Stacks Operation="Add">
-				<Stack Value="FileRead" />
-			</Stacks>
 		</SystemProvider>
 
 		<SystemProvider Id="SamplingCounter" Base="SystemProvider_Monitoring">
@@ -231,9 +228,9 @@
 		</SystemProvider>
 
 		<!-- Sampling Counter - Enables PMC Rollover Graph -->
-		<!-- When Strict is true the profile will not start when no such counters are present e.g. in VMs. BUT this will break WPRUI when even if the profiles are nowhere referenced with:
+    <!-- When Strict is true the profile will not start when no such counters are present e.g. in VMs. BUT this will break WPRUI when even if the profiles are nowhere referenced with:
 		     The number of hardware counters in the profile collection has exceeded the maximum allowable limit by the OS -->
-		<HardwareCounter Id="HardwareCounters_SamplingCounters" Base="" Strict="false">
+    <HardwareCounter Id="HardwareCounters_SamplingCounters" Base="" Strict="true">
 			<SampledCounters>
 				<!-- Accordig to https://stackoverflow.com/questions/53840322/difference-between-llcmisses-and-cachemisses-on-hardware-counters the counters are first
 			     defined in a generic way, which have then Processor Architecture specific latter synonyms.
@@ -278,7 +275,7 @@
 		</HardwareCounter>
 
 		<!-- Counting enabled CPI (Cycles per Instruction Graph) and Branch metrics -->
-		<HardwareCounter Id="HardwareCounters_EventCounters_CPI_Branch" Base="" Strict="false">
+		<HardwareCounter Id="HardwareCounters_EventCounters_CPI_Branch" Base="" Strict="true">
 			<Counters>
 				<!-- Only up to 4 counters are supported at a time. If you use 4 then you cannot use CPU sampling because that uses Timer! -->
 				<Counter Value="TotalCycles"/>
@@ -296,7 +293,7 @@
 		</HardwareCounter>
 
 		<!-- Counting enabled CPI (Cycles per Instruction Graph) and Last Level Cache (LLC) metrics -->
-		<HardwareCounter Id="HardwareCounters_EventCounters_CPI_LLC" Base="" Strict="false">
+		<HardwareCounter Id="HardwareCounters_EventCounters_CPI_LLC" Base="" Strict="true">
 			<Counters>
 				<!-- Only up to 4 counters are supported at a time. If you use 4 then you cannot use CPU sampling because that uses Timer!-->
 				<Counter Value="TotalCycles"/>
@@ -313,7 +310,7 @@
 		</HardwareCounter>
 
 		<!-- Last Branch Record samples Branch data from -> to jump targets which helps to determine e.g. often called methods -->
-		<HardwareCounter Id="HardwareCounters_EventCounters_LBR" Base="" Strict="false">
+		<HardwareCounter Id="HardwareCounters_EventCounters_LBR" Base="" Strict="true">
 			<LastBranch>
 				<Events>
 					<Event Value="SampledProfile" />
