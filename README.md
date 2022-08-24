@@ -1,6 +1,8 @@
 **FileWriter**
 
-is a simple test application to show how one can integrate performance regression tests with ETW profiling and automated data extraction.
+See [https://aloiskraus.wordpress.com/2022/07/25/pdd-profiler-driven-development/](https://aloiskraus.wordpress.com/2022/07/25/pdd-profiler-driven-development/) for full details.
+
+It is a test application to show how one can integrate performance regression tests with ETW profiling and automated data extraction with ETWAnalyzer.
 
 Compile the application with VS 2022 and execute from an administrator prompt *RunPerformanceTests.cmd*.
 
