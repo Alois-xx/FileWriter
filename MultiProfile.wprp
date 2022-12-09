@@ -163,6 +163,16 @@
 			</Stacks>
 		</SystemProvider>
 
+		<SystemProvider Id="SystemProvider_SysCall" Base="SystemProvider_Monitoring">
+			<Keywords Operation="Add">
+				<Keyword Value="SystemCall"/>
+				<Keyword Value="CSwitch"/>
+			</Keywords>
+			<Stacks>
+				<Stack Value="SystemCallEnter"/>
+			</Stacks>
+		</SystemProvider>
+		
 		<SystemProvider Id="SystemProvider_LongRunning" Base="">
 			<Keywords>
 				<Keyword Value="CpuConfig"/>
@@ -800,6 +810,21 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 						<EventProviderId Value="EventProvider_DNSClient"/>
 					</EventProviders>
 				</EventCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="SysCall.Verbose.File" Name="SysCall" Description="SysCall (CPU Samples/Disk/.NET Exceptions/Focus/SysCall)" Base="Default.Verbose.File"  LoggingMode="File" DetailLevel="Verbose">
+			<Collectors Operation="Add">
+				<!-- In the kernel session we define how much memory it needs and which SystemProviderId is enable which enables the corresponding kernel and stackwalks -->
+				<SystemCollectorId Value="SystemProfiling_System">
+					<SystemProviderId Value="SystemProvider_SysCall"/>
+				</SystemCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="SysCall.Verbose.Memory" Name="SysCall" Description="SysCall (CPU Samples/Disk/.NET Exceptions/Focus/SysCall)" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+			<Collectors Operation="Add">
+				<SystemCollectorId Value="SystemProfiling_System">
+					<SystemProviderId Value="SystemProvider_SysCall"/>
+				</SystemCollectorId>
 			</Collectors>
 		</Profile>
 
