@@ -162,7 +162,6 @@
 				<Stack Value="ReadyThread"/>
 			</Stacks>
 		</SystemProvider>
-
 		<SystemProvider Id="SystemProvider_SysCall" Base="SystemProvider_Monitoring">
 			<Keywords Operation="Add">
 				<Keyword Value="SystemCall"/>
@@ -172,7 +171,6 @@
 				<Stack Value="SystemCallEnter"/>
 			</Stacks>
 		</SystemProvider>
-		
 		<SystemProvider Id="SystemProvider_LongRunning" Base="">
 			<Keywords>
 				<Keyword Value="CpuConfig"/>
@@ -238,7 +236,7 @@
 		</SystemProvider>
 
 		<!-- Sampling Counter - Enables PMC Rollover Graph -->
-    <!-- When Strict is true the profile will not start when no such counters are present e.g. in VMs. BUT this will break WPRUI when even if the profiles are nowhere referenced with:
+		<!-- When Strict is true the profile will not start when no such counters are present e.g. in VMs. BUT this will break WPRUI when even if the profiles are nowhere referenced with:
 		     The number of hardware counters in the profile collection has exceeded the maximum allowable limit by the OS -->
     <HardwareCounter Id="HardwareCounters_SamplingCounters" Base="" Strict="true">
 			<SampledCounters>
@@ -320,7 +318,7 @@
 		</HardwareCounter>
 
 		<!-- Last Branch Record samples Branch data from -> to jump targets which helps to determine e.g. often called methods -->
-		<HardwareCounter Id="HardwareCounters_EventCounters_LBR" Base="" Strict="true">
+	<HardwareCounter Id="HardwareCounters_EventCounters_LBR" Base="" Strict="true">
 			<LastBranch>
 				<Events>
 					<Event Value="SampledProfile" />
@@ -424,7 +422,7 @@
 			<CaptureStateOnSave> <!-- Get during rundown all open connections and some additional metrics which are stored by WPR. E.g. TcpConnectionRundown, IpRouteRundown, IpInterfaceRundown, TcpConnectionSummary, RssBindingRundow, RssPortRundown -->
 				<Keyword Value="0xffffffff"/>
 			</CaptureStateOnSave>
-			<EventFilters FilterIn="false">
+			<EventFilters FilterIn="false"> <!-- These events are not necessary to display send/receive metrics in WPA but cost a lot of space -->
 				<EventId Value="1065"/>  <!-- TcpTcbStartTimer -->
 				<EventId Value="1157"/>  <!-- TcpDeliveryIndicated -->
 				<EventId Value="1205"/>  <!-- TcpipReceiveSlowPath -->
@@ -435,6 +433,8 @@
 				<EventId Value="1320"/>  <!-- TcpipTimerDpcFiredEvent -->
 				<EventId Value="1454"/>  <!-- Firewall Packet inspection result -->
 				<EventId Value="1455"/>  <!-- Firewall Create Port -->
+				<EventId Value="1367"/>  <!-- TcpipNblOob -->
+				<EventId Value="1227"/>  <!-- TcpRscNblOobInfo -->
 			</EventFilters>
 			<StackFilters FilterIn="true">
 				<EventId Value="1013"/> <!-- TcpCreateEndpoint Useful to find out who initiates a TCP connection from an unusual code location -->
@@ -827,7 +827,6 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 				</SystemCollectorId>
 			</Collectors>
 		</Profile>
-
 		<Profile Id="Sockets.Verbose.File" Name="Sockets" Description="Sockets (CPU Samples/Disk/.NET Exceptions/Focus/Sockets)" Base="Default.Verbose.File"  LoggingMode="File" DetailLevel="Verbose">
 			<Collectors Operation="Add">
 				<EventCollectorId Value="EventCollector_UserModeSession">
