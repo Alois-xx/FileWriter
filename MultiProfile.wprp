@@ -480,7 +480,37 @@
 				<Keyword Value = "0x30000000000" />  <!-- Track GDI and Window Handle Leaks -->
 			</Keywords>
 		</EventProvider>
+		
+		<!-- Microsoft-Windows-Kernel-Processor-Power is needed to get CPU Frequency for different P-States this does NOT include thermal throttling events -->
+		<EventProvider Id="ProcessorPower" Name="Microsoft-Windows-Kernel-Processor-Power" />
+		<!-- EventProvider_Microsoft-Windows-Kernel-Processor-Power_CaptureState is needed to get cleartext names of HardwareDebugRegisterRundown and HardwareDebugParameterRundown -->
+		<EventProvider Id="ProcessorPower_CaptureState" Name="Microsoft-Windows-Kernel-Processor-Power" CaptureStateOnly="true"  NonPagedMemory="true" >
+		  <CaptureStateOnSave>
+			<Keyword Value="0xffffffffffffffff"/>
+		  </CaptureStateOnSave>
+		</EventProvider>
 
+		<!-- This will add Power profile information into ETW which shows up in WPA under Trace - Power Settings -->
+		<EventProvider Id="WindowsKernelPower_CaptureState" Name="Microsoft-Windows-Kernel-Power" CaptureStateOnly="true"  NonPagedMemory="true" >
+			<CaptureStateOnSave>
+				<Keyword Value="0xffffffffffffffff"/>
+			</CaptureStateOnSave>
+		</EventProvider>
+		
+		<EventProvider Id="Battery" Name="Microsoft-Windows-Battery" />
+		<EventProvider Id="EnergyEstimation" Name="Microsoft-Windows-Energy-Estimation-Engine" />
+		<EventProvider Id="PowerCAD" Name="Microsoft-Windows-Power-CAD" />
+		
+
+		<!-- Microsoft-Windows-Kernel-Power is needed to find system timer resolution changes and where they are requested via it stack trace. The event 63 SystemTimeResolutionChange contains the data   -->
+		<EventProvider Id="KernelPower" Name="Microsoft-Windows-Kernel-Power" NonPagedMemory="true" Stack="true">
+			<!--  Stackfilters are only supported in post 1803 Windows versions. If an error happens you can comment it out. You will just record more data. -->
+			<StackFilters FilterIn="true">
+				<EventId Value="63"/>
+			</StackFilters>
+		</EventProvider>
+		
+		
 		<EventProvider Id="EventProvider_Socket" Name="Microsoft-Windows-Winsock-AFD" NonPagedMemory="true" Stack="true">
 			<!-- 
 			Microsoft-Windows-Winsock-AFD            {E53C6823-7BB8-44BB-90DC-3F86090D48A6}
@@ -645,6 +675,8 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 						<EventProviderId Value="EventProvider_Microsoft-Windows-Subsys-SMSS"/>
 						<EventProviderId Value="EventProvider_Microsoft-Windows-Winlogon"/>
 						<EventProviderId Value="EventProvider_Microsoft-Windows-Wininit"/>
+						<EventProviderId Value="ProcessorPower_CaptureState" />
+						<EventProviderId Value="WindowsKernelPower_CaptureState" />
 					</EventProviders>
 				</EventCollectorId>
 				<!-- When many .NET processes with JITed code (e.g. Visual Studio) are running the .NET Rundown events can overwrite our actual payload data. We need an extra 
@@ -653,10 +685,9 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 					<BufferSize Value="1024"/>
 					<Buffers Value="100"/>
 					<EventProviders>
-						<EventProviderId Value="MultiProfile_DotNETRuntimeRundown_CaptureState"/>
+						<EventProviderId Value="MultiProfile_DotNETRuntimeRundown_CaptureState" />
 					</EventProviders>
 				</EventCollectorId>
-
 			</Collectors>
 
 			<!-- When user and kernel session are merged we need especially the ImageId events or we wont get any stack traces -->
@@ -716,7 +747,9 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 						<EventProviderId Value="EventProvider_Microsoft-Windows-Subsys-SMSS"/>
 						<EventProviderId Value="EventProvider_Microsoft-Windows-Winlogon"/>
 						<EventProviderId Value="EventProvider_Microsoft-Windows-Wininit"/>
-					</EventProviders>
+						<EventProviderId Value="ProcessorPower_CaptureState" />
+						<EventProviderId Value="WindowsKernelPower_CaptureState" />
+				</EventProviders>
 				</EventCollectorId>
 				<EventCollectorId Value="EventCollector_Rundown">
 					<!-- Operation Set will overwrite the value from inherited profile. Add will add the numbers, Remove will subtract!  -->
@@ -727,7 +760,34 @@ AfdWaitForListen,	 1036,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 ,	 46,
 			</Collectors>
 		</Profile>
 
-
+		<Profile Id="Frequency.Verbose.File" Name="Frequency" Description="Frequency (CPU Samples/Disk/.NET Exceptions/Focus/Frequency)" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
+			<Collectors Operation="Add">
+				<!-- In this session, which must have the same value as the EventCollector defined above, we put all user mode providers together we want to enable here   -->
+				<EventCollectorId Value="EventCollector_UserModeSession">
+					<EventProviders>
+						<EventProviderId Value="ProcessorPower" />
+						<EventProviderId Value="KernelPower" />
+						<EventProviderId Value="Battery" />
+						<EventProviderId Value="EnergyEstimation" />
+						<EventProviderId Value="PowerCAD" />
+					</EventProviders>
+				</EventCollectorId>
+			</Collectors>
+		</Profile>
+		<Profile Id="Frequency.Verbose.Memory" Name="Frequency" Description="Frequency (CPU Samples/Disk/.NET Exceptions/Focus/Frequency)" Base="Default.Verbose.Memory" LoggingMode="Memory" DetailLevel="Verbose">
+			<Collectors Operation="Add">
+				<!-- In this session, which must have the same value as the EventCollector defined above, we put all user mode providers together we want to enable here   -->
+				<EventCollectorId Value="EventCollector_UserModeSession">
+					<EventProviders>
+						<EventProviderId Value="ProcessorPower" />
+						<EventProviderId Value="KernelPower" />
+						<EventProviderId Value="Battery" />
+						<EventProviderId Value="EnergyEstimation" />
+						<EventProviderId Value="PowerCAD" />
+					</EventProviders>
+				</EventCollectorId>
+			</Collectors>
+		</Profile>
 
 		<Profile Id="CSwitch.Verbose.File" Name="CSwitch" Description="CSwitch (CPU Samples/Disk/.NET Exceptions/Focus/Context Switch)" Base="Default.Verbose.File" LoggingMode="File" DetailLevel="Verbose">
 			<Collectors Operation="Add">
