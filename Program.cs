@@ -7,31 +7,42 @@ namespace FileWriter
     {
         static int myFileCount = 5000;
 
-        enum GenerationMode
-        {
-            Serial,
-            Parallel,
-            TaskParallel,
-        }
-
         static void Help()
         {
-            string Help = "FileWriter [-generate dir] [serial,parallel [-threads n],taskparallel]  [-files dd] [-extension .cmd]" + Environment.NewLine +
+            string Help = "FileWriter [-write/compile/execute] [-folder dir]  [-files dd] [-sizeKB n] [-threads n or all or all-1] [-extension .cmd] " + Environment.NewLine +
+                          "  -write    Generate text files with given extension." + Environment.NewLine + 
+                          "  -compile  Simulate compilation by writing exe files instead of text files." + Environment.NewLine +
+                          "  -execute  Execute the generated files." + Environment.NewLine +
                           "Examples" + Environment.NewLine +
-                          $"Write {myFileCount} files to c:\\temp with 4 threads." + Environment.NewLine +
-                          "  FileWriter -generate c:\\temp parallel -threads 4";
+                          $"Write {myFileCount} files to c:\\temp\\Write with 1 thread." + Environment.NewLine +
+                          "  FileWriter -write -folder c:\\temp\\Write -threads 1" + Environment.NewLine +
+                         $"Simulate compile by writing executables to c:\\temp\\Compile." + Environment.NewLine +
+                          "  FileWriter -compile -folder c:\\temp\\compile -threads 1" + Environment.NewLine +
+                        $"Simulate execution of compiled executables by running all executables in folder c:\\temp\\Compile." + Environment.NewLine +
+                         "  FileWriter -execute -folder c:\\temp\\compile -threads 1";
+
+
             Console.WriteLine(Help);
         }
 
+        enum Mode
+        {
+            Generate,
+            Compile,
+            Execute,
+        }
+
+
         public static int Main(string[] args)
         {
-            int sizeKB = 100;
+            int sizeKB = 200;
 
             string? outputDirectory = null;
             int? nThreads = null;
-            GenerationMode mode = GenerationMode.Serial;
             string extension = ".cmd"; // Make Antivirus nervous
             Queue<string> qArgs = new Queue<string>(args);
+
+            Mode mode = Mode.Generate;
 
             try
             {
@@ -41,27 +52,42 @@ namespace FileWriter
 
                     switch (current.ToLowerInvariant())
                     {
-                        case "-generate":
+                        case "-folder":
                             outputDirectory = qArgs.Dequeue();
-                            if (qArgs.Count > 0)
-                            {
-                                if (qArgs.TryPeek(out string? strMode))
-                                {
-                                    if (Enum.TryParse<GenerationMode>(strMode, true, out mode))
-                                    {
-                                        string tmp = qArgs.Dequeue();
-                                    }
-                                }
-                            }
+                            Directory.CreateDirectory(outputDirectory);
                             break;
                         case "-threads":
-                            nThreads = int.Parse(qArgs.Dequeue());
+                            string threadCount = qArgs.Dequeue();
+                            if (threadCount.ToLowerInvariant() == "all")
+                            {
+                                nThreads = Environment.ProcessorCount;
+                            }
+                            else if( threadCount.ToLowerInvariant() == "all-1")
+                            {
+                                nThreads = Environment.ProcessorCount - 1;
+                            }
+                            else
+                            {
+                                nThreads = int.Parse(threadCount);
+                            }
                             break;
                         case "-extension":
                             extension = qArgs.Dequeue();
                             break;
                         case "-files":
                             myFileCount = int.Parse(qArgs.Dequeue());
+                            break;
+                        case "-sizekb":
+                            sizeKB = int.Parse(qArgs.Dequeue());
+                            break;
+                        case "-compile":
+                            mode = Mode.Compile;
+                            break;
+                        case "-execute":
+                            mode = Mode.Execute;
+                            break;
+                        case "-write":
+                            mode = Mode.Generate;
                             break;
                         default:
                             Help();
@@ -85,21 +111,20 @@ namespace FileWriter
 
             DataGenerator gen = new DataGenerator(outputDirectory, extension);
             var sw = Stopwatch.StartNew();
-            switch (mode)
+            switch(mode)
             {
-                case GenerationMode.Parallel:
-                    gen.CreateFilesParallel(myFileCount, sizeKB, nThreads);
+                case Mode.Compile:
+                    gen.SimulateCompile(myFileCount, sizeKB, nThreads ?? 1);
                     break;
-                case GenerationMode.TaskParallel:
-                    gen.CreateFilesTask(myFileCount, sizeKB);
+                case Mode.Execute:
+                    myFileCount = gen.SimulateExecute(nThreads ?? 1);   
                     break;
-                case GenerationMode.Serial:
                 default:
-                    gen.CreateFiles(myFileCount, sizeKB);
+                    gen.CreateFilesParallel(myFileCount, sizeKB, nThreads);
                     break;
             }
             sw.Stop();
-            Console.WriteLine($"Did create {myFileCount} files of {sizeKB} KB size ({(sizeKB * myFileCount) / 1024:N0}) MB in {sw.Elapsed.TotalSeconds:F3}s");
+            Console.WriteLine($"Did {mode} {myFileCount} files of {sizeKB} KB size ({(sizeKB * myFileCount) / 1024:N0}) MB in {sw.Elapsed.TotalSeconds:F3}s");
             return (int)sw.Elapsed.TotalMilliseconds;
         }
     }
