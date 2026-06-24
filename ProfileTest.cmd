@@ -1,7 +1,5 @@
 @echo off
 SETLOCAL EnableDelayedExpansion
-set OutDir=!ETWLocation!
-mkdir !OutDir! 2> NUL
  
 if "%1" EQU "" (
 	echo ProfileTest.cmd TestcaseName YourApp.exe ...
@@ -16,12 +14,16 @@ if "%1" EQU "" (
 REM By default use the latest one from the Windows SDK
 set WPRLocation=C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\wpr.exe
 set ScriptLocation=%~dp0
-set TestCase=%1
+set TestCase=%2
 
 REM otherwise use the one supplied by the OS, which might have bugs
 if NOT EXIST "!WPRLocation!" set WPRLocation=wpr.exe
-echo Testcase !TestCase!
+set OutDir=%1
+mkdir !OutDir! 2> NUL
 shift
+shift
+echo ETWFolder: !OutDir! for Testcase !TestCase!
+
 REM cancel any previously started session
 "!WPRLocation!" -cancel 2> NUL
 

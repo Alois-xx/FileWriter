@@ -5,7 +5,8 @@ if %ERRORLEVEL% GTR 0 (
 	echo Install latest ETWAnalyzer from https://github.com/Siemens-Healthineers/ETWAnalyzer/releases/ and put it in your path.
 	goto :EOF
 )
-set TestCase=%1
+set ETWLocation=%1
+set TestCase=%2
 REM Extract all CPU data (-allcpu) which can make file size ca. 50% larger but then you see everything what WPA also sees
 REM skip already exctracted files 
 
