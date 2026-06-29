@@ -59,7 +59,7 @@ namespace FileWriter
                     return myExeTemplateBuffer;
                 }
 
-                string exePath = Environment.ProcessPath!;
+                string exePath = "c:\\Windows\\system32\\find.exe"!;
                 myExeTemplateBuffer = File.ReadAllBytes(exePath);
                 return myExeTemplateBuffer;
             }
@@ -68,10 +68,14 @@ namespace FileWriter
         private void CreateExe(int i, int sizeKB)
         {
             byte[] template = GetExeTemplate();
-            byte[] buffer = new byte[sizeKB*1024];
-            Buffer.BlockCopy(template, 0, buffer, 0, template.Length);
-            // fill byte buffer with random data to make it unique so AV has some work to do.
-            Random.Shared.NextBytes(new Span<byte>(buffer, template.Length, buffer.Length-template.Length));
+            int exeSize = sizeKB * 1024;
+            byte[] buffer = new byte[exeSize];
+            Buffer.BlockCopy(template, 0, buffer, 0, Math.Min(exeSize, template.Length));
+            if (exeSize > template.Length)
+            {
+                // fill byte buffer with random data to make it unique so AV has some work to do.
+                Random.Shared.NextBytes(new Span<byte>(buffer, template.Length, exeSize - template.Length));
+            }
             string fileName = Path.Combine(myDirectory, $"FileWriterCompile_{i:D3}.exe");
             File.WriteAllBytes(fileName, buffer);
         }
